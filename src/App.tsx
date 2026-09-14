@@ -21,6 +21,32 @@ import { scaleMetrics } from "./science.mjs";
 
 type Mode = "observe" | "anatomy" | "scale";
 type Layer = "disk" | "shadow" | "lensing" | "beaming";
+const journeySteps = [
+  {
+    title: "Meet the darkness.",
+    eyebrow: "THE BLACK HOLE & ITS LIGHT",
+    body: "The glow comes from gas outside the black hole. The dark silhouette is its shadow, enlarged by gravity. Take a moment to look around.",
+    pose: [0, 7, 27],
+  },
+  {
+    title: "Follow the light.",
+    eyebrow: "A DIFFERENT PATH THROUGH SPACE",
+    body: "The arch is a view of the far side of the same disk. Gravity bends its light toward you. Compare the two views to see what changes.",
+    pose: [0, 5.4, 25],
+  },
+  {
+    title: "A new perspective.",
+    eyebrow: "ABOVE THE ACCRETION DISK",
+    body: "From above, the sweeping arcs resolve into a disk around the darkness. It is the same scene, seen from a different angle. Drag to explore your own viewpoint.",
+    pose: [0, 26, 3.5],
+  },
+  {
+    title: "Find our place in it.",
+    eyebrow: "AN EXTRAORDINARY SENSE OF SCALE",
+    body: "That tiny blue circle is Neptune’s orbit. About 43 of its diameters fit across this event horizon, using the 66-billion-Sun estimate and a nonrotating model.",
+    pose: [0, 7, 27],
+  },
+];
 const chapters: {
   id: Layer;
   number: string;
@@ -104,6 +130,8 @@ export default function App() {
     [cinema, setCinema] = useState(false);
   const [scaleZoom, setScaleZoom] = useState(false),
     [toast, setToast] = useState("");
+  const [journey, setJourney] = useState<number | null>(null);
+  const stop = journey === null ? null : journeySteps[journey];
   const metrics = scaleMetrics();
   useEffect(() => {
     let v: BlackHoleViewer;
@@ -152,6 +180,18 @@ export default function App() {
     }
   }, [mode, cinema]);
   useEffect(() => {
+    if (journey === null) return;
+    setMode(journey === 3 ? "scale" : "observe");
+    setLens(true);
+    setDisk(true);
+    setBeaming(true);
+    setExposure(1);
+    setOrbit(false);
+    setScaleZoom(false);
+    const [x, y, z] = journeySteps[journey].pose;
+    viewer.current?.setPose(x, y, z);
+  }, [journey]);
+  useEffect(() => {
     if (!toast) return;
     const id = setTimeout(() => setToast(""), 3000);
     return () => clearTimeout(id);
@@ -162,6 +202,8 @@ export default function App() {
         setNotes(false);
         setHelp(false);
         setCinema(false);
+        setJourney(null);
+        setLens(true);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -174,11 +216,14 @@ export default function App() {
     [],
   );
   const chooseMode = (next: Mode) => {
+    setJourney(null);
+    setLens(true);
     setMode(next);
     if (next === "anatomy") viewer.current?.setPose(0, 8.5, 24);
     if (next === "observe") viewer.current?.reset();
   };
   const reset = () => {
+    setJourney(null);
     setLens(true);
     setDisk(true);
     setBeaming(true);
@@ -218,7 +263,9 @@ export default function App() {
   };
   const active = chapters.find((c) => c.id === layer)!;
   return (
-    <div className={`app mode-${mode} ${cinema ? "cinema" : ""}`}>
+    <div
+      className={`app mode-${mode} ${cinema ? "cinema" : ""} ${stop ? "journey" : ""}`}
+    >
       <div
         ref={host}
         className="universe"
@@ -295,7 +342,7 @@ export default function App() {
       )}
 
       <main>
-        {mode === "observe" && (
+        {mode === "observe" && !stop && (
           <>
             <section className="intro">
               <div className="eyebrow">
@@ -312,10 +359,16 @@ export default function App() {
                 <br className="desktop" /> revealed by the light around it.
               </p>
               <button
-                className="text-link"
+                className="text-link journey-start"
+                onClick={() => setJourney(0)}
+              >
+                Begin the journey <ArrowUpRight size={18} />
+              </button>
+              <button
+                className="free-explore"
                 onClick={() => chooseMode("anatomy")}
               >
-                Explore the anatomy <ArrowUpRight size={18} />
+                Or explore freely
               </button>
             </section>
             <div className="object-tag">
@@ -329,6 +382,79 @@ export default function App() {
               <span className="divider" /> ARTISTIC INTERPRETATION
             </div>
           </>
+        )}
+
+        {stop && (
+          <section className="journey-panel" aria-label="Guided journey">
+            <div className="journey-steps" aria-label="Journey stops">
+              {journeySteps.map((s, i) => (
+                <button
+                  key={s.title}
+                  aria-label={`Stop ${i + 1}: ${s.title}`}
+                  aria-current={journey === i ? "step" : undefined}
+                  onClick={() => setJourney(i)}
+                >
+                  <span>0{i + 1}</span>
+                </button>
+              ))}
+            </div>
+            <div className="journey-copy" aria-live="polite">
+              <div className="eyebrow">{stop.eyebrow}</div>
+              <h1>{stop.title}</h1>
+              <p>{stop.body}</p>
+            </div>
+            {journey === 1 && (
+              <div className="journey-comparison">
+                <Toggle
+                  label="Bend the light"
+                  value={lens}
+                  onChange={() => setLens(!lens)}
+                />
+                <p>
+                  {lens
+                    ? "Curved light paths · the lensed view"
+                    : "Straight light paths · comparison only"}
+                </p>
+              </div>
+            )}
+            {journey === 3 && (
+              <button
+                className="text-link"
+                onClick={() => setScaleZoom(!scaleZoom)}
+              >
+                {scaleZoom
+                  ? "Return to the full scale"
+                  : "Look closer at our solar system"}
+                <Focus size={17} />
+              </button>
+            )}
+            <div className="journey-navigation">
+              <button
+                className="journey-back"
+                disabled={journey === 0}
+                onClick={() => setJourney((n) => Math.max(0, (n ?? 0) - 1))}
+              >
+                Back
+              </button>
+              <button
+                className="text-link"
+                onClick={() =>
+                  journey === 3
+                    ? chooseMode("observe")
+                    : setJourney((n) => (n ?? 0) + 1)
+                }
+              >
+                {journey === 3 ? "Explore on your own" : "Continue"}
+                <ArrowUpRight size={17} />
+              </button>
+            </div>
+            <button
+              className="journey-exit"
+              onClick={() => chooseMode("observe")}
+            >
+              Leave the journey
+            </button>
+          </section>
         )}
 
         {mode === "anatomy" && (

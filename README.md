@@ -6,7 +6,9 @@ An interactive journey to the black hole powering TON 618. A companion to [ISS O
 
 ![An artistic view of the black hole and its lensed accretion disk](public/portrait.jpg)
 
-Orbit a luminous disk, compare curved and straight light paths, inspect the shadow and Doppler brightness, and discover the scale of the event horizon beside Neptune’s orbit. Includes an original optional ambient score, cinema mode, pause, automatic orbit, exposure control, and downloadable portraits.
+Begin with a self-paced, four-stop journey through the shadow, bent light, an overhead disk view, and cosmic scale. The lensing stop offers a direct curved/straight-path comparison. Each stop positions the camera, while free orbit and independent exploration remain available.
+
+Orbit a luminous disk, inspect its shadow and Doppler brightness, and compare the event horizon with Neptune’s orbit. Includes an original optional ambient score, cinema mode, pause, automatic orbit, exposure control, and downloadable portraits.
 
 ## What this represents
 

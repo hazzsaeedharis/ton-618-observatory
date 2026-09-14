@@ -125,6 +125,11 @@ export class BlackHoleViewer {
     this.material.uniforms.uHighlight.value = value ? 1 : 0;
   }
   setPose(x: number, y: number, z: number) {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      this.camera.position.set(x, y, z);
+      this.goal = undefined;
+      return;
+    }
     this.goal = new THREE.Vector3(x, y, z);
   }
   reset() {
