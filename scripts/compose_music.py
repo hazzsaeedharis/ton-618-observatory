@@ -20,7 +20,7 @@ def place(signal, start, pan=0):
     mix[offset:offset + len(signal), 0] += signal * np.cos(angle)
     mix[offset:offset + len(signal), 1] += signal * np.sin(angle)
 
-# Spacious D-minor harmony with added ninths; the final chord resolves home.
+# Spacious added-ninth harmony, transposed to C minor below; the final chord resolves home.
 chords = [
     (38, [50, 57, 60, 64, 69]),
     (34, [53, 57, 60, 62, 69]),

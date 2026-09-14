@@ -2,7 +2,7 @@
 
 An interactive journey to the black hole powering TON 618. A companion to [ISS Observatory](https://hazzsaeedharis.github.io/iss-observatory/).
 
-**[Enter the observatory](https://hazzsaeedharis.github.io/ton-618-observatory/)**
+**[Enter the observatory](https://hazzsaeedharis.github.io/ton-618-observatory/)** · [Download the 30-second film with music](https://github.com/hazzsaeedharis/ton-618-observatory/releases/download/v1.0.0/ton-618-showcase-with-music.mp4)
 
 ![An artistic view of the black hole and its lensed accretion disk](public/portrait.jpg)
 
