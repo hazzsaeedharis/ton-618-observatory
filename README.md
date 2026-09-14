@@ -6,13 +6,15 @@ An interactive journey to the black hole powering TON 618. A companion to [ISS O
 
 ![An artistic view of the black hole and its lensed accretion disk](public/portrait.jpg)
 
-Begin with a self-paced, four-stop journey through the shadow, bent light, an overhead disk view, and cosmic scale. The lensing stop offers a direct curved/straight-path comparison. Each stop positions the camera, while free orbit and independent exploration remain available.
+Begin with a replayable cinematic approach from a distant glow to the luminous disk, with pause and skip controls. If sound is enabled, the original score builds with the approach. Reduced-motion preferences skip the automatic camera flight.
+
+Continue with a self-paced, four-stop journey through the shadow, bent light, an overhead disk view, and cosmic scale. The lensing stop offers a direct curved/straight-path comparison. Each stop positions the camera, while free orbit and independent exploration remain available. The scale stop now pulls continuously from Neptune’s neighborhood to TON 618, with pause, replay, a manual scrubber, and a true relative scale maintained throughout.
 
 Orbit a luminous disk, inspect its shadow and Doppler brightness, and compare the event horizon with Neptune’s orbit. Includes an original optional ambient score, cinema mode, pause, automatic orbit, exposure control, and downloadable portraits.
 
 ## What this represents
 
-This is a science-informed **artistic interpretation**, not a photograph, measured reconstruction, or research-grade simulation of TON 618. The visualization uses approximate spatial light trajectories around a nonrotating black hole, a procedural thin disk, illustrative beaming, and bloom. The disk’s color, texture, orientation, extent, and motion are artistic choices. It does not solve full Kerr geodesics or relativistic radiative transfer. Spin, realistic plasma physics, cosmological redshift, and accretion timescales are not modeled.
+This is a science-informed **artistic interpretation**, not a photograph, measured reconstruction, or research-grade simulation of TON 618. The visualization uses approximate spatial light trajectories around a nonrotating black hole (with a straight weak-field approach outside the 40-radius integration region for distant views), a procedural thin disk, illustrative beaming, and bloom. The disk’s color, texture, orientation, extent, and motion are artistic choices. It does not solve full Kerr geodesics or relativistic radiative transfer. Spin, realistic plasma physics, cosmological redshift, and accretion timescales are not modeled.
 
 The black hole is not presented as a collection of mechanical parts. Anatomy mode explains physical phenomena and allows independent visual comparisons.
 

@@ -30,8 +30,14 @@ export class BlackHoleViewer {
   private width = 1;
   private height = 1;
   private compact = false;
+  private targetShift = 0.5;
   private quality = 1;
   private smoothFrame = 16;
+  private arrival?: {
+    elapsed: number;
+    progress: (value: number) => void;
+    done: () => void;
+  };
   constructor(
     private host: HTMLElement,
     cinematic = false,
@@ -108,6 +114,7 @@ export class BlackHoleViewer {
     this.material.uniforms.uFov.value = this.width < 600 ? 0.8 : 0.48;
     this.material.uniforms.uShift.value =
       this.compact || this.width < 900 ? 0 : 0.5;
+    this.targetShift = this.material.uniforms.uShift.value;
   }
   setLens(value: boolean) {
     this.material.uniforms.uLens.value = value ? 1 : 0;
@@ -132,6 +139,20 @@ export class BlackHoleViewer {
     }
     this.goal = new THREE.Vector3(x, y, z);
   }
+  beginArrival(progress: (value: number) => void, done: () => void) {
+    this.goal = undefined;
+    this.controls.enabled = false;
+    this.controls.maxDistance = 1200;
+    this.arrival = { elapsed: 0, progress, done };
+    this.camera.position.set(-130, 145, 825);
+  }
+  finishArrival() {
+    this.arrival = undefined;
+    this.controls.enabled = true;
+    this.controls.maxDistance = 40;
+    this.camera.position.set(0, 7, 27);
+    this.goal = undefined;
+  }
   reset() {
     this.setPose(0, 7, 27);
   }
@@ -141,7 +162,7 @@ export class BlackHoleViewer {
   }
   center(value: boolean) {
     this.compact = value;
-    this.resize();
+    this.targetShift = value || this.width < 900 ? 0 : 0.5;
   }
   capture() {
     this.composer.render();
@@ -162,6 +183,27 @@ export class BlackHoleViewer {
       }
     }
     if (!this.paused) this.elapsed += delta;
+    if (this.arrival) {
+      const flight = this.arrival;
+      if (!this.paused) flight.elapsed += delta;
+      const t = Math.min(flight.elapsed / 11, 1);
+      const ease = t * t * (3 - 2 * t);
+      const radius = Math.exp(
+        Math.log(850) * (1 - ease) + Math.log(Math.hypot(7, 27)) * ease,
+      );
+      const elevation = 0.17 + (Math.atan2(7, 27) - 0.17) * ease;
+      const yaw = -0.16 * (1 - ease);
+      this.camera.position.set(
+        Math.sin(yaw) * radius * Math.cos(elevation),
+        Math.sin(elevation) * radius,
+        Math.cos(yaw) * radius * Math.cos(elevation),
+      );
+      flight.progress(t);
+      if (t === 1) {
+        this.finishArrival();
+        flight.done();
+      }
+    }
     this.controls.autoRotate = this.orbit && !this.paused && !this.goal;
     this.controls.autoRotateSpeed = 0.35;
     if (this.goal) {
@@ -179,6 +221,8 @@ export class BlackHoleViewer {
     u.uUp.value.setFromMatrixColumn(this.camera.matrixWorld, 1);
     u.uForward.value.setFromMatrixColumn(this.camera.matrixWorld, 2).negate();
     u.uTime.value = this.elapsed;
+    u.uShift.value +=
+      (this.targetShift - u.uShift.value) * (1 - Math.exp(-delta * 4));
     if (!this.suspended) this.composer.render();
     this.ready = true;
     this.onFrame?.(this.elapsed);

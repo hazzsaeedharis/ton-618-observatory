@@ -73,6 +73,13 @@ void main() {
  vec3 p=uEye, v=dir;
  float angular=length(cross(p,v));
  float h2=angular*angular;
+ // Skip the weak-field approach to keep distant cinematic views affordable.
+ // Bending inside the 40-radius integration region still uses the same rays.
+ if(length(p)>40.0) {
+  float b=dot(p,v), discriminant=b*b-dot(p,p)+1600.0;
+  if(discriminant>0.0 && b<0.0) p+=v*max(0.0,-b-sqrt(discriminant));
+  else {gl_FragColor=vec4(sky(dir)*uExposure,1.0);return;}
+ }
  vec3 light=vec3(0.0);
  float trans=1.0;
  float closest=100.0;

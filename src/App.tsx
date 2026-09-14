@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { BlackHoleViewer } from "./viewer";
 import { scaleMetrics } from "./science.mjs";
+import ScaleJourney from "./ScaleJourney";
 
 type Mode = "observe" | "anatomy" | "scale";
 type Layer = "disk" | "shadow" | "lensing" | "beaming";
@@ -43,7 +44,7 @@ const journeySteps = [
   {
     title: "Find our place in it.",
     eyebrow: "AN EXTRAORDINARY SENSE OF SCALE",
-    body: "That tiny blue circle is Neptune’s orbit. About 43 of its diameters fit across this event horizon, using the 66-billion-Sun estimate and a nonrotating model.",
+    body: "Watch Neptune’s orbit shrink as you pull back. About 43 of its diameters fit across this event horizon, using the 66-billion-Sun estimate and a nonrotating model.",
     pose: [0, 7, 27],
   },
 ];
@@ -128,8 +129,10 @@ export default function App() {
     [notes, setNotes] = useState(false),
     [help, setHelp] = useState(false),
     [cinema, setCinema] = useState(false);
-  const [scaleZoom, setScaleZoom] = useState(false),
+  const [scaleFocusRequest, setScaleFocusRequest] = useState(0),
     [toast, setToast] = useState("");
+  const [arriving, setArriving] = useState(false);
+  const [arrivalProgress, setArrivalProgress] = useState(0);
   const [journey, setJourney] = useState<number | null>(null);
   const stop = journey === null ? null : journeySteps[journey];
   const metrics = scaleMetrics();
@@ -176,9 +179,9 @@ export default function App() {
   useEffect(() => {
     if (viewer.current) {
       viewer.current.suspended = mode === "scale" && !cinema;
-      viewer.current.center(cinema);
+      viewer.current.center(cinema || arriving);
     }
-  }, [mode, cinema]);
+  }, [mode, cinema, arriving]);
   useEffect(() => {
     if (journey === null) return;
     setMode(journey === 3 ? "scale" : "observe");
@@ -187,10 +190,25 @@ export default function App() {
     setBeaming(true);
     setExposure(1);
     setOrbit(false);
-    setScaleZoom(false);
+    setScaleFocusRequest(0);
     const [x, y, z] = journeySteps[journey].pose;
-    viewer.current?.setPose(x, y, z);
-  }, [journey]);
+    if (!arriving) viewer.current?.setPose(x, y, z);
+  }, [journey, arriving]);
+  useEffect(() => {
+    if (!arriving || !viewer.current) return;
+    const v = viewer.current;
+    v.beginArrival(
+      (value) => {
+        setArrivalProgress(Math.round(value * 100) / 100);
+        if (audio.current) audio.current.volume = 0.12 + 0.43 * value;
+      },
+      () => setArriving(false),
+    );
+    return () => {
+      v.finishArrival();
+      if (audio.current) audio.current.volume = 0.55;
+    };
+  }, [arriving]);
   useEffect(() => {
     if (!toast) return;
     const id = setTimeout(() => setToast(""), 3000);
@@ -202,6 +220,7 @@ export default function App() {
         setNotes(false);
         setHelp(false);
         setCinema(false);
+        setArriving(false);
         setJourney(null);
         setLens(true);
       }
@@ -215,7 +234,17 @@ export default function App() {
     },
     [],
   );
+  const beginJourney = () => {
+    setJourney(0);
+    setCinema(false);
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches && ready) {
+      setPaused(false);
+      setArrivalProgress(0);
+      setArriving(true);
+    }
+  };
   const chooseMode = (next: Mode) => {
+    setArriving(false);
     setJourney(null);
     setLens(true);
     setMode(next);
@@ -223,6 +252,7 @@ export default function App() {
     if (next === "observe") viewer.current?.reset();
   };
   const reset = () => {
+    setArriving(false);
     setJourney(null);
     setLens(true);
     setDisk(true);
@@ -264,7 +294,7 @@ export default function App() {
   const active = chapters.find((c) => c.id === layer)!;
   return (
     <div
-      className={`app mode-${mode} ${cinema ? "cinema" : ""} ${stop ? "journey" : ""}`}
+      className={`app mode-${mode} ${cinema ? "cinema" : ""} ${stop ? "journey" : ""} ${arriving ? "arriving" : ""}`}
     >
       <div
         ref={host}
@@ -360,7 +390,8 @@ export default function App() {
               </p>
               <button
                 className="text-link journey-start"
-                onClick={() => setJourney(0)}
+                onClick={beginJourney}
+                disabled={!ready && !error}
               >
                 Begin the journey <ArrowUpRight size={18} />
               </button>
@@ -403,6 +434,11 @@ export default function App() {
               <h1>{stop.title}</h1>
               <p>{stop.body}</p>
             </div>
+            {journey === 0 && (
+              <button className="arrival-replay" onClick={beginJourney}>
+                <Play size={12} /> Replay the arrival
+              </button>
+            )}
             {journey === 1 && (
               <div className="journey-comparison">
                 <Toggle
@@ -420,11 +456,9 @@ export default function App() {
             {journey === 3 && (
               <button
                 className="text-link"
-                onClick={() => setScaleZoom(!scaleZoom)}
+                onClick={() => setScaleFocusRequest((n) => n + 1)}
               >
-                {scaleZoom
-                  ? "Return to the full scale"
-                  : "Look closer at our solar system"}
+                Focus on our solar system
                 <Focus size={17} />
               </button>
             )}
@@ -520,39 +554,12 @@ export default function App() {
               </div>
               <button
                 className="text-link"
-                onClick={() => setScaleZoom(!scaleZoom)}
+                onClick={() => setScaleFocusRequest((n) => n + 1)}
               >
-                {scaleZoom
-                  ? "Return to the full scale"
-                  : "Find our solar system"}{" "}
-                <Focus size={18} />
+                Focus on our solar system <Focus size={18} />
               </button>
             </div>
-            <div className={`scale-diagram ${scaleZoom ? "zoomed" : ""}`}>
-              <div className="horizon-circle">
-                <div className="horizon-text">
-                  TON 618<span>EVENT HORIZON</span>
-                </div>
-                <div className="diameter-line">
-                  <span>
-                    ≈ {Math.round(metrics.diameterAU).toLocaleString()} AU
-                  </span>
-                </div>
-              </div>
-              <div
-                className="solar-circle"
-                style={{
-                  width: `${100 / metrics.neptuneRatio}%`,
-                  height: `${100 / metrics.neptuneRatio}%`,
-                }}
-              >
-                <span className="sun" />
-              </div>
-              <div className="solar-label">
-                <span />
-                NEPTUNE’S ORBIT<small>60.14 AU ACROSS</small>
-              </div>
-            </div>
+            <ScaleJourney focusRequest={scaleFocusRequest} />
             <p className="scale-caption">
               Relative diameters are to scale. The Sun is enlarged for
               visibility.
@@ -563,6 +570,31 @@ export default function App() {
         )}
       </main>
 
+      {arriving && (
+        <section className="arrival-caption" aria-label="Cinematic arrival">
+          <div className="eyebrow">A JOURNEY BEYOND THE VISIBLE</div>
+          <h2>
+            {arrivalProgress < 0.33
+              ? "A light in the distance."
+              : arrivalProgress < 0.73
+                ? "Something extraordinary awaits."
+                : "TON 618."}
+          </h2>
+          <p>Cinematic approach · artistic interpretation</p>
+          <div className="arrival-progress">
+            <span style={{ width: `${arrivalProgress * 100}%` }} />
+          </div>
+          <div className="arrival-buttons">
+            <button onClick={() => setPaused(!paused)}>
+              {paused ? <Play size={14} /> : <Pause size={14} />}{" "}
+              {paused ? "Resume approach" : "Pause approach"}
+            </button>
+            <button onClick={() => setArriving(false)}>
+              Skip arrival <ArrowUpRight size={14} />
+            </button>
+          </div>
+        </section>
+      )}
       <aside className="readout" aria-label="Object facts">
         <div>
           <span>ESTIMATED MASS</span>
